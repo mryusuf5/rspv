@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RSVP API Tester</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #0f1117;
+      color: #e1e4e8;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #161b22;
+      border-bottom: 1px solid #30363d;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 { font-size: 18px; font-weight: 600; color: #f0f6ff; }
+
+    #auth-badge {
+      margin-left: auto;
+      font-size: 13px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: #21262d;
+      border: 1px solid #30363d;
+    }
+
+    #auth-badge.logged-in { border-color: #238636; color: #3fb950; }
+
+    nav {
+      display: flex;
+      gap: 4px;
+      padding: 16px 32px 0;
+      border-bottom: 1px solid #30363d;
+    }
+
+    nav button {
+      background: none;
+      border: none;
+      color: #8b949e;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      border-radius: 4px 4px 0 0;
+      transition: color .15s;
+    }
+
+    nav button:hover { color: #e1e4e8; }
+    nav button.active { color: #f0f6ff; border-bottom-color: #1f6feb; }
+
+    main { padding: 32px; max-width: 860px; }
+
+    .tab { display: none; }
+    .tab.active { display: block; }
+
+    h2 { font-size: 16px; font-weight: 600; margin-bottom: 20px; color: #f0f6ff; }
+    h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: #c9d1d9; }
+
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .row { display: flex; gap: 12px; margin-bottom: 12px; }
+
+    label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 4px; }
+
+    input[type=text], input[type=password] {
+      width: 100%;
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #e1e4e8;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    input:focus { border-color: #1f6feb; }
+
+    .field { flex: 1; }
+
+    button.btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #c9d1d9;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      transition: background .15s, border-color .15s;
+      white-space: nowrap;
+    }
+
+    button.btn:hover { background: #30363d; border-color: #58a6ff; color: #e1e4e8; }
+    button.btn.primary { background: #1f6feb; border-color: #1f6feb; color: #fff; }
+    button.btn.primary:hover { background: #388bfd; border-color: #388bfd; }
+    button.btn.danger { background: #da3633; border-color: #da3633; color: #fff; }
+    button.btn.danger:hover { background: #f85149; border-color: #f85149; }
+    button.btn.success { background: #238636; border-color: #238636; color: #fff; }
+    button.btn.success:hover { background: #2ea043; border-color: #2ea043; }
+    button.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .response-box {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 12px;
+      font-family: 'Cascadia Code', 'Fira Code', monospace;
+      font-size: 12px;
+      color: #8b949e;
+      white-space: pre-wrap;
+      word-break: break-all;
+      max-height: 280px;
+      overflow-y: auto;
+      margin-top: 12px;
+    }
+
+    .response-box.ok { border-color: #238636; color: #3fb950; }
+    .response-box.err { border-color: #da3633; color: #f85149; }
+
+    .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+
+    .book-card {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .book-card .book-title { font-size: 13px; font-weight: 600; color: #f0f6ff; }
+    .book-card .book-meta { font-size: 11px; color: #8b949e; }
+    .book-card .actions { display: flex; gap: 6px; margin-top: 4px; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px; height: 14px;
+      border: 2px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      margin-right: 6px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .tag.pdf { background: #1f3a5f; color: #79c0ff; }
+    .tag.epub { background: #2d1f5f; color: #b48eff; }
+
+    .progress-bar-wrap { background: #21262d; border-radius: 4px; height: 6px; margin-top: 4px; }
+    .progress-bar { background: #1f6feb; height: 100%; border-radius: 4px; transition: width .3s; }
+
+    .divider { border: none; border-top: 1px solid #21262d; margin: 20px 0; }
+
+    .available-files { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+
+<header>
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="#58a6ff"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+  <h1>RSVP API Tester</h1>
+  <span id="auth-badge">Not logged in</span>
+</header>
+
+<nav>
+  <button class="active" onclick="switchTab('auth')">Auth</button>
+  <button onclick="switchTab('profile')">Profile</button>
+  <button onclick="switchTab('books')">Books</button>
+  <button onclick="switchTab('progress')">Progress</button>
+</nav>
+
+<main>
+
+  <!-- AUTH TAB -->
+  <div id="tab-auth" class="tab active">
+    <div class="card">
+      <h2>Register</h2>
+      <div class="row">
+        <div class="field"><label>Name</label><input id="reg-name" type="text" placeholder="johndoe" /></div>
+        <div class="field"><label>Password</label><input id="reg-pass" type="password" placeholder="min 8 chars" /></div>
+        <button class="btn primary" style="align-self:flex-end" onclick="register()">Register</button>
+      </div>
+      <div id="reg-resp" class="response-box" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <h2>Login</h2>
+      <div class="row">
+        <div class="field"><label>Username</label><input id="login-name" type="text" placeholder="johndoe" /></div>
+        <div class="field"><label>Password</label><input id="login-pass" type="password" placeholder="••••••••" /></div>
+        <button class="btn primary" style="align-self:flex-end" onclick="login()">Login</button>
+      </div>
+      <div id="login-resp" class="response-box" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <h2>Logout</h2>
+      <button class="btn danger" onclick="logout()">Clear token &amp; logout</button>
+    </div>
+  </div>
+
+  <!-- PROFILE TAB -->
+  <div id="tab-profile" class="tab">
+    <div class="card">
+      <h2>Current User <button class="btn" style="float:right;margin-top:-4px" onclick="getMe()">Refresh</button></h2>
+      <div id="me-resp" class="response-box">Click Refresh to load.</div>
+    </div>
+  </div>
+
+  <!-- BOOKS TAB -->
+  <div id="tab-books" class="tab">
+    <div class="card">
+      <h2>Upload a Book</h2>
+      <h3>Available files</h3>
+      <div class="available-files">
+        <button class="btn" onclick="uploadPublicFile('crime-and-punishment.pdf', 'application/pdf')">
+          📄 crime-and-punishment.pdf
+        </button>
+        <button class="btn" onclick="uploadPublicFile('pg2554.epub', 'application/epub+zip')">
+          📖 pg2554.epub
+        </button>
+      </div>
+      <div id="upload-resp" class="response-box" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <h2>My Books <button class="btn" style="float:right;margin-top:-4px" onclick="loadBooks()">Refresh</button></h2>
+      <div id="books-list">
+        <p style="color:#8b949e;font-size:13px">Click Refresh to load your books.</p>
+      </div>
+    </div>
+
+    <div class="card" id="pages-card" style="display:none">
+      <h2>Pages — <span id="pages-book-title"></span>
+        <button class="btn" style="float:right;margin-top:-4px" onclick="closePagesCard()">Close</button>
+      </h2>
+      <div id="pages-list"></div>
+    </div>
+  </div>
+
+  <!-- PROGRESS TAB -->
+  <div id="tab-progress" class="tab">
+    <div class="card">
+      <h2>Reading Progress</h2>
+      <div class="row">
+        <div class="field">
+          <label>Book ID</label>
+          <input id="prog-book-id" type="text" placeholder="e.g. 1" />
+        </div>
+        <button class="btn" style="align-self:flex-end" onclick="getProgress()">Get Progress</button>
+      </div>
+      <div id="get-prog-resp" class="response-box" style="display:none"></div>
+    </div>
+
+    <div class="card">
+      <h2>Save Progress</h2>
+      <div class="row">
+        <div class="field"><label>Book ID</label><input id="save-book-id" type="text" placeholder="e.g. 1" /></div>
+        <div class="field"><label>Page Number</label><input id="save-page" type="text" placeholder="e.g. 3" /></div>
+        <div class="field"><label>Word Index</label><input id="save-word" type="text" placeholder="e.g. 42" /></div>
+        <button class="btn primary" style="align-self:flex-end" onclick="saveProgress()">Save</button>
+      </div>
+      <div id="save-prog-resp" class="response-box" style="display:none"></div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  const API = '/api';
+
+  // ── helpers ──────────────────────────────────────────────────────────────
+
+  function token() { return localStorage.getItem('jwt'); }
+
+  function headers(extra = {}) {
+    const h = { 'Content-Type': 'application/json', 'Accept': 'application/json', ...extra };
+    if (token()) h['Authorization'] = 'Bearer ' + token();
+    return h;
+  }
+
+  function show(el, data, ok = true) {
+    el.style.display = 'block';
+    el.className = 'response-box ' + (ok ? 'ok' : 'err');
+    el.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  }
+
+  function updateBadge() {
+    const badge = document.getElementById('auth-badge');
+    const stored = localStorage.getItem('jwt_user');
+    if (token() && stored) {
+      const u = JSON.parse(stored);
+      badge.textContent = '✓ ' + u.name;
+      badge.className = 'logged-in';
+    } else {
+      badge.textContent = 'Not logged in';
+      badge.className = '';
+    }
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // ── auth ─────────────────────────────────────────────────────────────────
+
+  async function register() {
+    const box = document.getElementById('reg-resp');
+    const name = document.getElementById('reg-name').value.trim();
+    const password = document.getElementById('reg-pass').value;
+    if (!name || !password) { show(box, 'Name and password are required.', false); return; }
+
+    show(box, 'Registering…');
+    const res = await fetch(`${API}/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ name, password }),
+    });
+    const data = await res.json();
+    show(box, data, res.ok);
+
+    if (res.ok && data.token) {
+      localStorage.setItem('jwt', data.token);
+      localStorage.setItem('jwt_user', JSON.stringify(data.user));
+      updateBadge();
+    }
+  }
+
+  async function login() {
+    const box = document.getElementById('login-resp');
+    const username = document.getElementById('login-name').value.trim();
+    const password = document.getElementById('login-pass').value;
+    if (!username || !password) { show(box, 'Username and password are required.', false); return; }
+
+    show(box, 'Logging in…');
+    const res = await fetch(`${API}/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    });
+    const data = await res.json();
+    show(box, data, res.ok);
+
+    if (res.ok && data.token) {
+      localStorage.setItem('jwt', data.token);
+      localStorage.setItem('jwt_user', JSON.stringify(data.user));
+      updateBadge();
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('jwt');
+    localStorage.removeItem('jwt_user');
+    updateBadge();
+    document.getElementById('login-resp').style.display = 'none';
+  }
+
+  // ── profile ───────────────────────────────────────────────────────────────
+
+  async function getMe() {
+    const box = document.getElementById('me-resp');
+    show(box, 'Loading…');
+    const res = await fetch(`${API}/me`, { headers: headers() });
+    const data = await res.json();
+    show(box, data, res.ok);
+  }
+
+  // ── books ─────────────────────────────────────────────────────────────────
+
+  async function uploadPublicFile(filename, mimeType) {
+    const box = document.getElementById('upload-resp');
+    show(box, `⟳ Fetching ${filename} from server…`);
+
+    let blob;
+    try {
+      const fileRes = await fetch(`/${filename}`);
+      if (!fileRes.ok) throw new Error(`Could not fetch /${filename} (${fileRes.status})`);
+      blob = await fileRes.blob();
+    } catch (e) {
+      show(box, `Error fetching file: ${e.message}`, false);
+      return;
+    }
+
+    show(box, `⟳ Uploading ${filename} to API (this may take a while for large files)…`);
+
+    const form = new FormData();
+    form.append('file', new File([blob], filename, { type: mimeType }));
+
+    const res = await fetch(`${API}/books/upload`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token(), 'Accept': 'application/json' },
+      body: form,
+    });
+    const data = await res.json();
+    show(box, data, res.ok);
+
+    if (res.ok) loadBooks();
+  }
+
+  async function loadBooks() {
+    const container = document.getElementById('books-list');
+    container.innerHTML = '<p style="color:#8b949e;font-size:13px"><span class="spinner"></span>Loading…</p>';
+
+    const res = await fetch(`${API}/books`, { headers: headers() });
+    if (!res.ok) {
+      container.innerHTML = `<p style="color:#f85149;font-size:13px">Error: ${res.status}</p>`;
+      return;
+    }
+
+    const data = await res.json();
+    const books = data['hydra:member'] ?? data.member ?? data;
+
+    if (!books.length) {
+      container.innerHTML = '<p style="color:#8b949e;font-size:13px">No books yet. Upload one above.</p>';
+      return;
+    }
+
+    container.innerHTML = `<div class="book-grid">${books.map(bookCard).join('')}</div>`;
+  }
+
+  function bookCard(b) {
+    const pct = b.totalPages > 0 ? Math.round((1 / b.totalPages) * 100) : 0;
+    return `
+      <div class="book-card">
+        <span class="tag ${b.format}">${b.format.toUpperCase()}</span>
+        <div class="book-title">${esc(b.title)}</div>
+        ${b.author ? `<div class="book-meta">by ${esc(b.author)}</div>` : ''}
+        <div class="book-meta">${b.totalPages} pages · uploaded ${fmtDate(b.uploadedAt)}</div>
+        <div class="book-meta">ID: ${b.id} · ${esc(b.originalFilename)}</div>
+        <div class="actions">
+          <button class="btn" onclick="viewPages(${b.id}, '${esc(b.title)}')">Pages</button>
+          <button class="btn" onclick="fillProgress(${b.id})">Progress</button>
+          <button class="btn danger" onclick="deleteBook(${b.id})">Delete</button>
+        </div>
+      </div>`;
+  }
+
+  async function deleteBook(id) {
+    if (!confirm(`Delete book ${id}?`)) return;
+    const res = await fetch(`${API}/books/${id}`, { method: 'DELETE', headers: headers() });
+    if (res.ok || res.status === 204) loadBooks();
+    else alert('Delete failed: ' + res.status);
+  }
+
+  async function viewPages(bookId, title) {
+    const card = document.getElementById('pages-card');
+    const list = document.getElementById('pages-list');
+    document.getElementById('pages-book-title').textContent = title;
+    card.style.display = 'block';
+    list.innerHTML = '<p style="color:#8b949e;font-size:13px"><span class="spinner"></span>Loading pages…</p>';
+    card.scrollIntoView({ behavior: 'smooth' });
+
+    const res = await fetch(`${API}/books/${bookId}/pages`, { headers: headers() });
+    const data = await res.json();
+    const pages = data['hydra:member'] ?? data.member ?? data;
+
+    if (!pages.length) { list.innerHTML = '<p style="color:#8b949e;font-size:13px">No pages found.</p>'; return; }
+
+    list.innerHTML = pages.map(p => `
+      <div style="margin-bottom:12px;padding:12px;background:#0d1117;border:1px solid #21262d;border-radius:6px">
+        <div style="font-size:11px;color:#8b949e;margin-bottom:6px">Page ${p.pageNumber} · ${p.wordCount} words</div>
+        <div style="font-size:13px;color:#c9d1d9;line-height:1.6;max-height:100px;overflow:hidden">${esc(p.content ?? '').substring(0, 400)}…</div>
+      </div>`).join('');
+  }
+
+  function closePagesCard() {
+    document.getElementById('pages-card').style.display = 'none';
+  }
+
+  // ── progress ──────────────────────────────────────────────────────────────
+
+  function fillProgress(bookId) {
+    document.getElementById('prog-book-id').value = bookId;
+    document.getElementById('save-book-id').value = bookId;
+    switchTab('progress');
+    document.querySelectorAll('nav button')[3].classList.add('active');
+    document.querySelectorAll('nav button').forEach((b, i) => { if (i !== 3) b.classList.remove('active'); });
+  }
+
+  async function getProgress() {
+    const box = document.getElementById('get-prog-resp');
+    const id = document.getElementById('prog-book-id').value.trim();
+    if (!id) { show(box, 'Enter a book ID.', false); return; }
+    show(box, 'Loading…');
+    const res = await fetch(`${API}/progress/${id}`, { headers: headers() });
+    const data = await res.json();
+    show(box, data, res.ok);
+  }
+
+  async function saveProgress() {
+    const box = document.getElementById('save-prog-resp');
+    const id   = document.getElementById('save-book-id').value.trim();
+    const page = parseInt(document.getElementById('save-page').value);
+    const word = parseInt(document.getElementById('save-word').value);
+    if (!id || isNaN(page) || isNaN(word)) { show(box, 'All fields are required.', false); return; }
+
+    show(box, 'Saving…');
+    const res = await fetch(`${API}/progress/${id}`, {
+      method: 'PUT',
+      headers: headers(),
+      body: JSON.stringify({ pageNumber: page, wordIndex: word }),
+    });
+    const data = await res.json();
+    show(box, data, res.ok);
+  }
+
+  // ── utils ─────────────────────────────────────────────────────────────────
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString(undefined, { day:'numeric', month:'short', year:'numeric' });
+  }
+
+  // ── init ──────────────────────────────────────────────────────────────────
+
+  updateBadge();
+</script>
+</body>
+</html>
