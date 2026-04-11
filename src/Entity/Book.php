@@ -13,28 +13,34 @@ use App\Controller\BookUploadController;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Bridge\Doctrine\Validator\Constraints\UniqueEntity;
 use Symfony\Component\Serializer\Attribute\Groups;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'books')]
+#[ORM\UniqueConstraint(name: 'uniq_user_book_file', columns: ['user_id', 'original_filename'])]
+#[UniqueEntity(fields: ['user', 'originalFilename'], message: 'You have already uploaded this file.')]
 #[ApiResource(
     shortName: 'Book',
     operations: [
         new GetCollection(
             normalizationContext: ['groups' => ['book:list']],
+            security: 'is_granted("ROLE_USER")',
         ),
         new Get(
             normalizationContext: ['groups' => ['book:read']],
+            security: 'is_granted("ROLE_USER") and object.getUser() == user',
         ),
         new Post(
             uriTemplate: '/books/upload',
             controller: BookUploadController::class,
             normalizationContext: ['groups' => ['book:read']],
+            security: 'is_granted("ROLE_USER")',
             deserialize: false,
             openapi: new \ApiPlatform\OpenApi\Model\Operation(
                 summary: 'Upload a PDF or EPUB file',
-                description: 'Upload a PDF or EPUB book file. The file will be parsed and split into pages, then persisted to the database.',
+                description: 'Upload a PDF or EPUB book file. The file will be parsed into pages and saved. Each file is unique per user.',
                 requestBody: new \ApiPlatform\OpenApi\Model\RequestBody(
                     description: 'Book file upload',
                     content: new \ArrayObject([
@@ -55,7 +61,9 @@ use Symfony\Component\Validator\Constraints as Assert;
                 ),
             ),
         ),
-        new Delete(),
+        new Delete(
+            security: 'is_granted("ROLE_USER") and object.getUser() == user',
+        ),
     ],
 )]
 class Book
@@ -65,6 +73,14 @@ class Book
     #[ORM\Column(type: 'integer')]
     #[Groups(['book:list', 'book:read'])]
     private ?int $id = null;
+
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
+    private User $user;
+
+    #[ORM\Column(type: 'string', length: 255)]
+    #[Groups(['book:list', 'book:read'])]
+    private string $originalFilename = '';
 
     #[ORM\Column(type: 'string', length: 500)]
     #[Assert\NotBlank]
@@ -90,7 +106,6 @@ class Book
 
     #[ORM\OneToMany(targetEntity: Page::class, mappedBy: 'book', cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[ORM\OrderBy(['pageNumber' => 'ASC'])]
-    #[Groups(['book:read'])]
     private Collection $pages;
 
     public function __construct()
@@ -102,6 +117,30 @@ class Book
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getUser(): User
+    {
+        return $this->user;
+    }
+
+    public function setUser(User $user): self
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    public function getOriginalFilename(): string
+    {
+        return $this->originalFilename;
+    }
+
+    public function setOriginalFilename(string $originalFilename): self
+    {
+        $this->originalFilename = $originalFilename;
+
+        return $this;
     }
 
     public function getTitle(): string

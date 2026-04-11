@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Service;
 
+use RuntimeException;
 use Spatie\PdfToText\Pdf;
+use Symfony\Component\Process\Process;
 
 class PdfParserService
 {
@@ -15,14 +17,13 @@ class PdfParserService
      */
     public function parse(string $filePath): array
     {
-        $pdf = new Pdf($filePath);
-        $totalPages = $pdf->getNumberOfPages();
-
+        $totalPages = $this->getPageCount($filePath);
         $pages = [];
 
         for ($pageNumber = 1; $pageNumber <= $totalPages; $pageNumber++) {
-            $text = (new Pdf($filePath))
-                ->setPageRange($pageNumber, $pageNumber)
+            $text = (new Pdf())
+                ->setPdf($filePath)
+                ->setOptions(["-f {$pageNumber}", "-l {$pageNumber}"])
                 ->text();
 
             $pages[$pageNumber] = $this->normalizeText($text);
@@ -32,16 +33,26 @@ class PdfParserService
     }
 
     /**
-     * Get total page count of a PDF without extracting text.
+     * Get total page count using pdfinfo (part of poppler-utils, same package as pdftotext).
      */
     public function getPageCount(string $filePath): int
     {
-        return (new Pdf($filePath))->getNumberOfPages();
+        $process = new Process(['pdfinfo', $filePath]);
+        $process->run();
+
+        if (!$process->isSuccessful()) {
+            throw new RuntimeException('pdfinfo failed: ' . $process->getErrorOutput());
+        }
+
+        if (preg_match('/^Pages:\s+(\d+)/m', $process->getOutput(), $matches)) {
+            return (int) $matches[1];
+        }
+
+        throw new RuntimeException('Could not determine page count from pdfinfo output.');
     }
 
     private function normalizeText(string $text): string
     {
-        // Normalize line endings, collapse excessive whitespace
         $text = str_replace(["\r\n", "\r"], "\n", $text);
         $text = preg_replace('/\n{3,}/', "\n\n", $text);
 

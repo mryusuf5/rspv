@@ -9,7 +9,9 @@ use App\Entity\User;
 use App\Entity\UserBookProgress;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Attribute\AsController;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -21,7 +23,7 @@ class ProgressController extends AbstractController
         private readonly EntityManagerInterface $entityManager,
     ) {}
 
-    public function __invoke(int $bookId, Request $request): UserBookProgress
+    public function __invoke(int $bookId, Request $request): JsonResponse
     {
         /** @var User $user */
         $user = $this->getUser();
@@ -37,13 +39,12 @@ class ProgressController extends AbstractController
             $progress = $progressRepo->findOneBy(['user' => $user, 'book' => $book]);
 
             if ($progress === null) {
-                // Return a default (unsaved) progress so the client gets a consistent shape
                 $progress = new UserBookProgress();
                 $progress->setUser($user);
                 $progress->setBook($book);
             }
 
-            return $progress;
+            return $this->json($this->normalize($progress));
         }
 
         // PUT — upsert progress
@@ -83,6 +84,22 @@ class ProgressController extends AbstractController
 
         $this->entityManager->flush();
 
-        return $progress;
+        return $this->json($this->normalize($progress), Response::HTTP_OK);
+    }
+
+    private function normalize(UserBookProgress $progress): array
+    {
+        return [
+            'id'         => $progress->getId(),
+            'pageNumber' => $progress->getPageNumber(),
+            'wordIndex'  => $progress->getWordIndex(),
+            'updatedAt'  => $progress->getUpdatedAt()->format(\DateTimeInterface::ATOM),
+            'book'       => [
+                'id'         => $progress->getBook()->getId(),
+                'title'      => $progress->getBook()->getTitle(),
+                'totalPages' => $progress->getBook()->getTotalPages(),
+                'format'     => $progress->getBook()->getFormat(),
+            ],
+        ];
     }
 }
