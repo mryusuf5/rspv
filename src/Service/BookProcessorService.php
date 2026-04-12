@@ -78,10 +78,11 @@ class BookProcessorService
 
         $pages = $this->epubParser->parse($filePath);
 
-        foreach ($pages as $pageNumber => $content) {
+        foreach ($pages as $pageNumber => $pageData) {
             $page = new Page();
             $page->setPageNumber($pageNumber);
-            $page->setContent($content);
+            $page->setContent($pageData['content']);
+            $page->setChapterTitle($pageData['chapterTitle']);
             $book->addPage($page);
         }
 

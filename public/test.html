@@ -181,6 +181,21 @@
     .divider { border: none; border-top: 1px solid #21262d; margin: 20px 0; }
 
     .available-files { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+
+    .page-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      text-align: left;
+      transition: background .15s, color .15s, border-color .15s;
+    }
+
+    .page-btn:hover { background: #30363d; color: #e1e4e8; }
+    .page-btn.selected { background: #1f3a5f; border-color: #1f6feb; color: #79c0ff; }
   </style>
 </head>
 <body>
@@ -263,7 +278,12 @@
       <h2>Pages — <span id="pages-book-title"></span>
         <button class="btn" style="float:right;margin-top:-4px" onclick="closePagesCard()">Close</button>
       </h2>
-      <div id="pages-list"></div>
+      <div style="display:flex;gap:16px;min-height:300px">
+        <div id="pages-list" style="width:120px;flex-shrink:0;overflow-y:auto;max-height:460px;display:flex;flex-direction:column;gap:4px"></div>
+        <div id="page-content" style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:16px;overflow-y:auto;max-height:460px">
+          <p style="color:#8b949e;font-size:13px">Select a page.</p>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -474,25 +494,62 @@
     else alert('Delete failed: ' + res.status);
   }
 
+  let _pages = [];
+  let _currentBookId = null;
+
   async function viewPages(bookId, title) {
+    _currentBookId = bookId;
     const card = document.getElementById('pages-card');
     const list = document.getElementById('pages-list');
+    const content = document.getElementById('page-content');
     document.getElementById('pages-book-title').textContent = title;
     card.style.display = 'block';
-    list.innerHTML = '<p style="color:#8b949e;font-size:13px"><span class="spinner"></span>Loading pages…</p>';
+    list.innerHTML = '<span class="spinner"></span>';
+    content.innerHTML = '<p style="color:#8b949e;font-size:13px">Select a page.</p>';
     card.scrollIntoView({ behavior: 'smooth' });
 
     const res = await fetch(`${API}/books/${bookId}/pages`, { headers: headers() });
     const data = await res.json();
-    const pages = data['hydra:member'] ?? data.member ?? data;
+    _pages = data['hydra:member'] ?? data.member ?? data;
 
-    if (!pages.length) { list.innerHTML = '<p style="color:#8b949e;font-size:13px">No pages found.</p>'; return; }
+    if (!_pages.length) {
+      list.innerHTML = '<p style="color:#8b949e;font-size:13px">No pages found.</p>';
+      return;
+    }
 
-    list.innerHTML = pages.map(p => `
-      <div style="margin-bottom:12px;padding:12px;background:#0d1117;border:1px solid #21262d;border-radius:6px">
-        <div style="font-size:11px;color:#8b949e;margin-bottom:6px">Page ${p.pageNumber} · ${p.wordCount} words</div>
-        <div style="font-size:13px;color:#c9d1d9;line-height:1.6;max-height:100px;overflow:hidden">${esc(p.content ?? '').substring(0, 400)}…</div>
-      </div>`).join('');
+    list.innerHTML = _pages.map((p, i) => {
+      const prevChapter = i > 0 ? _pages[i - 1].chapterTitle : null;
+      const showChapter = p.chapterTitle && p.chapterTitle !== prevChapter;
+      return `
+        ${showChapter ? `<div style="font-size:10px;color:#58a6ff;padding:8px 4px 2px;font-weight:600;border-top:1px solid #21262d;margin-top:4px">${esc(p.chapterTitle)}</div>` : ''}
+        <button class="page-btn" onclick="selectPage(${i})">
+          Page ${p.pageNumber}
+          <div style="font-size:10px;color:#6e7681;margin-top:2px">${p.wordCount} words</div>
+        </button>`;
+    }).join('');
+  }
+
+  async function selectPage(index) {
+    document.querySelectorAll('.page-btn').forEach((b, i) => b.classList.toggle('selected', i === index));
+    const p = _pages[index];
+    const content = document.getElementById('page-content');
+    content.innerHTML = '<p style="color:#8b949e;font-size:13px"><span class="spinner"></span>Loading…</p>';
+
+    const res = await fetch(`${API}/books/${_currentBookId}/pages/${p.pageNumber}`, { headers: headers() });
+    const data = await res.json();
+
+    content.innerHTML = `
+      ${data.chapterTitle ? `<div style="font-size:13px;font-weight:600;color:#58a6ff;margin-bottom:6px">${esc(data.chapterTitle)}</div>` : ''}
+      <div style="font-size:11px;color:#8b949e;margin-bottom:12px">Page ${data.pageNumber} · ${data.wordCount} words</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;line-height:1">${
+        (data.content ?? '').split(/\s+/).filter(Boolean).map(w => {
+          const mid = Math.floor((w.length - 1) / 2);
+          const before = esc(w.slice(0, mid));
+          const letter = esc(w[mid]);
+          const after  = esc(w.slice(mid + 1));
+          return `<span style="display:inline-block;padding:3px 7px;border:1px solid #30363d;border-radius:4px;font-size:13px;color:#c9d1d9;background:#161b22">${before}<span style="color:#f78166;font-weight:700">${letter}</span>${after}</span>`;
+        }).join('')
+      }</div>`;
   }
 
   function closePagesCard() {

@@ -35,7 +35,8 @@ use Symfony\Component\Validator\Constraints as Assert;
                     toProperty: 'book',
                 ),
                 'pageNumber' => new \ApiPlatform\Metadata\Link(
-                    fromProperty: 'pageNumber',
+                    fromClass: Page::class,
+                    identifiers: ['pageNumber'],
                 ),
             ],
             normalizationContext: ['groups' => ['page:read']],
@@ -62,6 +63,10 @@ class Page
     #[ORM\Column(type: 'text')]
     #[Groups(['page:read', 'book:read'])]
     private string $content = '';
+
+    #[ORM\Column(type: 'string', length: 512, nullable: true)]
+    #[Groups(['page:list', 'page:read', 'book:read'])]
+    private ?string $chapterTitle = null;
 
     #[ORM\Column(type: 'integer')]
     #[Groups(['page:list', 'page:read', 'book:read'])]
@@ -105,6 +110,18 @@ class Page
     {
         $this->content = $content;
         $this->wordCount = str_word_count($content);
+
+        return $this;
+    }
+
+    public function getChapterTitle(): ?string
+    {
+        return $this->chapterTitle;
+    }
+
+    public function setChapterTitle(?string $chapterTitle): self
+    {
+        $this->chapterTitle = $chapterTitle;
 
         return $this;
     }

@@ -14,10 +14,11 @@ class EpubParserService
     private const WORDS_PER_PAGE = 300;
 
     /**
-     * Parse an EPUB file and return an array of page content strings.
+     * Parse an EPUB file and return an array of page data.
+     * Each entry has 'content' and 'chapterTitle' (null when unknown).
      * Since EPUBs are reflowable, content is split into virtual pages by word count.
      *
-     * @return string[] indexed from 1
+     * @return array<int, array{content: string, chapterTitle: ?string}> indexed from 1
      */
     public function parse(string $filePath): array
     {
@@ -45,19 +46,33 @@ class EpubParserService
 
             $manifest = $this->parseManifest($opfXml, $opfDir);
             $spineItems = $this->parseSpine($opfXml, $manifest);
+            $chapterTitleMap = $this->buildChapterTitleMap($zip, $opfDir, $opfXml);
 
-            $fullText = '';
+            $pages = [];
+            $pageNumber = 1;
+
             foreach ($spineItems as $itemPath) {
                 $rawContent = $zip->getFromName($itemPath);
-                if ($rawContent !== false) {
-                    $fullText .= ' ' . $this->extractTextFromHtml($rawContent);
+                if ($rawContent === false) {
+                    continue;
+                }
+
+                $text = trim($this->extractTextFromHtml($rawContent));
+                if ($text === '') {
+                    continue;
+                }
+
+                $chapterTitle = $chapterTitleMap[$itemPath] ?? null;
+
+                foreach ($this->splitIntoChunks($text) as $chunk) {
+                    $pages[$pageNumber++] = ['content' => $chunk, 'chapterTitle' => $chapterTitle];
                 }
             }
         } finally {
             $zip->close();
         }
 
-        return $this->splitIntoPages(trim($fullText));
+        return $pages ?: [1 => ['content' => '', 'chapterTitle' => null]];
     }
 
     /**
@@ -199,25 +214,123 @@ class EpubParserService
     }
 
     /**
-     * Split a long text into pages of roughly WORDS_PER_PAGE words each.
+     * Split text into chunks of roughly WORDS_PER_PAGE words each.
      *
-     * @return string[] indexed from 1
+     * @return string[]
      */
-    private function splitIntoPages(string $text): array
+    private function splitIntoChunks(string $text): array
     {
         $words = preg_split('/\s+/', $text, -1, PREG_SPLIT_NO_EMPTY);
 
         if (empty($words)) {
-            return [1 => ''];
+            return [''];
         }
 
-        $chunks = array_chunk($words, self::WORDS_PER_PAGE);
-        $pages = [];
+        return array_map(
+            fn(array $chunk) => implode(' ', $chunk),
+            array_chunk($words, self::WORDS_PER_PAGE),
+        );
+    }
 
-        foreach ($chunks as $index => $chunk) {
-            $pages[$index + 1] = implode(' ', $chunk);
+    /**
+     * Build a map of spine item path => chapter title using the NCX or EPUB 3 nav document.
+     *
+     * @return array<string, string>
+     */
+    private function buildChapterTitleMap(\ZipArchive $zip, string $opfDir, \SimpleXMLElement $opfXml): array
+    {
+        $opfXml->registerXPathNamespace('opf', 'http://www.idpf.org/2007/opf');
+
+        // EPUB 2: toc.ncx
+        $ncxItems = $opfXml->xpath('//opf:manifest/opf:item[@media-type="application/x-dtbncx+xml"]')
+            ?: $opfXml->xpath('//*[local-name()="manifest"]/*[local-name()="item"][@media-type="application/x-dtbncx+xml"]');
+
+        if (!empty($ncxItems)) {
+            $href = (string) $ncxItems[0]['href'];
+            $path = $opfDir !== '' ? ltrim($opfDir . '/' . $href, '/') : $href;
+            $content = $zip->getFromName($path);
+            if ($content !== false) {
+                return $this->parseNcx($content, $opfDir);
+            }
         }
 
-        return $pages;
+        // EPUB 3: nav document
+        $navItems = $opfXml->xpath('//opf:manifest/opf:item[contains(@properties,"nav")]')
+            ?: $opfXml->xpath('//*[local-name()="manifest"]/*[local-name()="item"][contains(@properties,"nav")]');
+
+        if (!empty($navItems)) {
+            $href = (string) $navItems[0]['href'];
+            $path = $opfDir !== '' ? ltrim($opfDir . '/' . $href, '/') : $href;
+            $content = $zip->getFromName($path);
+            if ($content !== false) {
+                return $this->parseNavDocument($content, $opfDir);
+            }
+        }
+
+        return [];
+    }
+
+    /**
+     * Parse EPUB 2 toc.ncx and return a map of file path => chapter title.
+     *
+     * @return array<string, string>
+     */
+    private function parseNcx(string $ncxContent, string $opfDir): array
+    {
+        $previous = libxml_use_internal_errors(true);
+        $xml = new \SimpleXMLElement($ncxContent);
+        libxml_use_internal_errors($previous);
+
+        $navPoints = $xml->xpath('//*[local-name()="navPoint"]');
+        $map = [];
+
+        foreach ($navPoints ?? [] as $navPoint) {
+            $textNodes    = $navPoint->xpath('*[local-name()="navLabel"]/*[local-name()="text"]');
+            $contentNodes = $navPoint->xpath('*[local-name()="content"]');
+
+            if (empty($textNodes) || empty($contentNodes)) {
+                continue;
+            }
+
+            $title = trim((string) $textNodes[0]);
+            $src   = strtok((string) $contentNodes[0]['src'], '#');
+            $full  = $opfDir !== '' ? ltrim($opfDir . '/' . $src, '/') : $src;
+
+            if ($title !== '' && !isset($map[$full])) {
+                $map[$full] = $title;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * Parse EPUB 3 nav document and return a map of file path => chapter title.
+     *
+     * @return array<string, string>
+     */
+    private function parseNavDocument(string $navContent, string $opfDir): array
+    {
+        $previous = libxml_use_internal_errors(true);
+        $dom = new \DOMDocument();
+        $dom->loadHTML('<?xml encoding="utf-8" ?>' . $navContent, LIBXML_NONET | LIBXML_NOWARNING);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+
+        $xpath = new \DOMXPath($dom);
+        $anchors = $xpath->query('//nav//a[@href]');
+        $map = [];
+
+        foreach ($anchors as $a) {
+            $title = trim($a->textContent);
+            $src   = strtok($a->getAttribute('href'), '#');
+            $full  = $opfDir !== '' ? ltrim($opfDir . '/' . $src, '/') : $src;
+
+            if ($title !== '' && !isset($map[$full])) {
+                $map[$full] = $title;
+            }
+        }
+
+        return $map;
     }
 }
