@@ -11,8 +11,6 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
-use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
@@ -32,19 +30,19 @@ class RegistrationController extends AbstractController
         $data = json_decode($request->getContent(), true);
 
         if (!is_array($data)) {
-            throw new BadRequestHttpException('Invalid JSON body.');
+            return $this->json(['message' => 'Invalid JSON body.'], 400);
         }
 
         $name = trim($data['name'] ?? '');
         $plainPassword = $data['password'] ?? '';
 
         if ($name === '' || $plainPassword === '') {
-            throw new BadRequestHttpException('Both "name" and "password" fields are required.');
+            return $this->json(['message' => 'Username and password are required.'], 400);
         }
 
         $existing = $this->entityManager->getRepository(User::class)->findOneBy(['name' => $name]);
         if ($existing !== null) {
-            throw new ConflictHttpException('This name is already taken.');
+            return $this->json(['message' => 'That username is already taken.'], 409);
         }
 
         $user = new User();
@@ -53,12 +51,7 @@ class RegistrationController extends AbstractController
 
         $errors = $this->validator->validate($user, null, ['user:write']);
         if (count($errors) > 0) {
-            $messages = [];
-            foreach ($errors as $error) {
-                $messages[$error->getPropertyPath()] = $error->getMessage();
-            }
-
-            return $this->json(['errors' => $messages], Response::HTTP_UNPROCESSABLE_ENTITY);
+            return $this->json(['message' => $errors[0]->getMessage()], Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         $user->setPassword(

@@ -196,6 +196,31 @@
 
     .page-btn:hover { background: #30363d; color: #e1e4e8; }
     .page-btn.selected { background: #1f3a5f; border-color: #1f6feb; color: #79c0ff; }
+
+    .font-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #21262d;
+    }
+    .font-row:last-child { border-bottom: none; }
+    .font-name { font-size: 13px; font-weight: 600; color: #f0f6ff; flex: 1; min-width: 0; }
+    .font-meta { font-size: 11px; color: #8b949e; white-space: nowrap; }
+    .tag.ttf   { background: #1f3a5f; color: #79c0ff; }
+    .tag.otf   { background: #2d1f5f; color: #b48eff; }
+    .tag.woff  { background: #1f3d2b; color: #56d364; }
+    .tag.woff2 { background: #1c3a3a; color: #39d3bb; }
+    input[type=file] {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: #8b949e;
+      font-size: 13px;
+      width: 100%;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -211,6 +236,7 @@
   <button onclick="switchTab('profile')">Profile</button>
   <button onclick="switchTab('books')">Books</button>
   <button onclick="switchTab('progress')">Progress</button>
+  <button onclick="switchTab('fonts')">Fonts</button>
 </nav>
 
 <main>
@@ -284,6 +310,28 @@
           <p style="color:#8b949e;font-size:13px">Select a page.</p>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- FONTS TAB -->
+  <div id="tab-fonts" class="tab">
+    <div class="card">
+      <h2>My Fonts <button class="btn" style="float:right;margin-top:-4px" onclick="loadFonts()">Refresh</button></h2>
+      <div id="fonts-list">
+        <p style="color:#8b949e;font-size:13px">Click Refresh to load your fonts.</p>
+      </div>
+
+      <hr class="divider" />
+
+      <h3>Upload a Font</h3>
+      <div class="row" style="align-items:flex-end">
+        <div class="field">
+          <label>Font file (TTF, OTF, WOFF, WOFF2)</label>
+          <input type="file" id="font-file" accept=".ttf,.otf,.woff,.woff2" />
+        </div>
+        <button class="btn primary" onclick="uploadFont()">Upload</button>
+      </div>
+      <div id="font-upload-resp" class="response-box" style="display:none"></div>
     </div>
   </div>
 
@@ -591,6 +639,72 @@
     });
     const data = await res.json();
     show(box, data, res.ok);
+  }
+
+  // ── fonts ─────────────────────────────────────────────────────────────────
+
+  async function loadFonts() {
+    const container = document.getElementById('fonts-list');
+    container.innerHTML = '<p style="color:#8b949e;font-size:13px"><span class="spinner"></span>Loading…</p>';
+
+    const res = await fetch(`${API}/fonts`, { headers: headers() });
+    if (!res.ok) {
+      container.innerHTML = `<p style="color:#f85149;font-size:13px">Error: ${res.status}</p>`;
+      return;
+    }
+
+    const data = await res.json();
+    const fonts = data['hydra:member'] ?? data.member ?? data;
+
+    if (!fonts.length) {
+      container.innerHTML = '<p style="color:#8b949e;font-size:13px">No custom fonts yet. Upload one below.</p>';
+      return;
+    }
+
+    container.innerHTML = fonts.map(fontRow).join('');
+  }
+
+  function fontRow(f) {
+    return `
+      <div class="font-row">
+        <span class="tag ${f.format}">${f.format.toUpperCase()}</span>
+        <span class="font-name">${esc(f.displayName)}</span>
+        <span class="font-meta">${esc(f.originalFilename)} · ${fmtDate(f.uploadedAt)}</span>
+        <button class="btn danger" onclick="deleteFont(${f.id})">Delete</button>
+      </div>`;
+  }
+
+  async function deleteFont(id) {
+    if (!confirm(`Delete font ${id}?`)) return;
+    const res = await fetch(`${API}/fonts/${id}`, { method: 'DELETE', headers: headers() });
+    if (res.ok || res.status === 204) loadFonts();
+    else alert('Delete failed: ' + res.status);
+  }
+
+  async function uploadFont() {
+    const box = document.getElementById('font-upload-resp');
+    const input = document.getElementById('font-file');
+    const file = input.files[0];
+
+    if (!file) { show(box, 'Please select a font file first.', false); return; }
+
+    show(box, `⟳ Uploading ${file.name}…`);
+
+    const form = new FormData();
+    form.append('file', file);
+
+    const res = await fetch(`${API}/fonts/upload`, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + token(), 'Accept': 'application/json' },
+      body: form,
+    });
+    const data = await res.json();
+    show(box, data, res.ok);
+
+    if (res.ok) {
+      input.value = '';
+      loadFonts();
+    }
   }
 
   // ── utils ─────────────────────────────────────────────────────────────────

@@ -20,6 +20,44 @@ class BookProcessorService
     ) {}
 
     /**
+     * Parse a file and return raw data without persisting anything.
+     * Returns: ['title', 'author', 'format', 'originalFilename', 'pages' => [['pageNumber', 'content', 'chapterTitle']]]
+     */
+    public function parseOnly(UploadedFile $file): array
+    {
+        $format = $this->detectFormat($file);
+        $originalFilename = $file->getClientOriginalName();
+        $tempPath = $file->getPathname();
+
+        if ($format === 'pdf') {
+            $title = pathinfo($originalFilename, PATHINFO_FILENAME);
+            $author = null;
+            $rawPages = $this->pdfParser->parse($tempPath);
+            $pages = [];
+            foreach ($rawPages as $num => $content) {
+                $pages[] = ['pageNumber' => $num, 'content' => $content, 'chapterTitle' => null];
+            }
+        } else {
+            $metadata = $this->epubParser->extractMetadata($tempPath);
+            $title = $metadata['title'];
+            $author = $metadata['author'];
+            $rawPages = $this->epubParser->parse($tempPath);
+            $pages = [];
+            foreach ($rawPages as $num => $pageData) {
+                $pages[] = ['pageNumber' => $num, 'content' => $pageData['content'], 'chapterTitle' => $pageData['chapterTitle']];
+            }
+        }
+
+        return [
+            'title'            => $title,
+            'author'           => $author,
+            'format'           => $format,
+            'originalFilename' => $originalFilename,
+            'pages'            => $pages,
+        ];
+    }
+
+    /**
      * Process an uploaded file: detect format, parse pages, persist to database.
      */
     public function process(UploadedFile $file, User $user): Book
@@ -68,6 +106,7 @@ class BookProcessorService
         }
 
         $book->setTotalPages(count($pages));
+        $book->setTotalWords($this->sumWordCounts($book));
     }
 
     private function processEpub(Book $book, string $filePath): void
@@ -87,6 +126,16 @@ class BookProcessorService
         }
 
         $book->setTotalPages(count($pages));
+        $book->setTotalWords($this->sumWordCounts($book));
+    }
+
+    private function sumWordCounts(Book $book): int
+    {
+        $total = 0;
+        foreach ($book->getPages() as $page) {
+            $total += $page->getWordCount();
+        }
+        return $total;
     }
 
     private function detectFormat(UploadedFile $file): string

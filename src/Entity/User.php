@@ -61,6 +61,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:read'])]
     private \DateTimeImmutable $createdAt;
 
+    #[ORM\Column(type: 'boolean')]
+    private bool $isPrivate = false;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $avatarPath = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $bio = null;
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $font = null;
+
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    private ?string $theme = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
@@ -135,5 +150,60 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
+    }
+
+    public function isPrivate(): bool
+    {
+        return $this->isPrivate;
+    }
+
+    public function setIsPrivate(bool $isPrivate): self
+    {
+        $this->isPrivate = $isPrivate;
+        return $this;
+    }
+
+    public function getAvatarPath(): ?string
+    {
+        return $this->avatarPath;
+    }
+
+    public function setAvatarPath(?string $avatarPath): self
+    {
+        $this->avatarPath = $avatarPath;
+        return $this;
+    }
+
+    public function getBio(): ?string
+    {
+        return $this->bio;
+    }
+
+    public function setBio(?string $bio): self
+    {
+        $this->bio = $bio;
+        return $this;
+    }
+
+    public function getFont(): ?string
+    {
+        return $this->font;
+    }
+
+    public function setFont(?string $font): self
+    {
+        $this->font = $font;
+        return $this;
+    }
+
+    public function getTheme(): ?string
+    {
+        return $this->theme;
+    }
+
+    public function setTheme(?string $theme): self
+    {
+        $this->theme = $theme;
+        return $this;
     }
 }

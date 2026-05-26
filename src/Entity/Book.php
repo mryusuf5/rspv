@@ -9,6 +9,7 @@ use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Post;
+use App\Controller\BookContentStartController;
 use App\Controller\BookUploadController;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -30,7 +31,7 @@ use Symfony\Component\Validator\Constraints as Assert;
         ),
         new Get(
             normalizationContext: ['groups' => ['book:read']],
-            security: 'is_granted("ROLE_USER") and object.getUser() == user',
+            security: 'is_granted("ROLE_USER") and (is_granted("ROLE_ADMIN") or object.getUser() == user or "ROLE_ADMIN" in object.getUser().getRoles())',
         ),
         new Post(
             uriTemplate: '/books/upload',
@@ -63,6 +64,14 @@ use Symfony\Component\Validator\Constraints as Assert;
         ),
         new Delete(
             security: 'is_granted("ROLE_USER") and object.getUser() == user',
+        ),
+        new Get(
+            uriTemplate: '/books/{id}/content-start',
+            controller: BookContentStartController::class,
+            security: 'is_granted("ROLE_USER")',
+            read: false,
+            serialize: false,
+            openapi: false,
         ),
     ],
 )]
@@ -99,6 +108,10 @@ class Book
     #[ORM\Column(type: 'integer')]
     #[Groups(['book:list', 'book:read'])]
     private int $totalPages = 0;
+
+    #[ORM\Column(type: 'integer')]
+    #[Groups(['book:list', 'book:read'])]
+    private int $totalWords = 0;
 
     #[ORM\Column(type: 'datetime_immutable')]
     #[Groups(['book:list', 'book:read'])]
@@ -187,6 +200,18 @@ class Book
     public function setTotalPages(int $totalPages): self
     {
         $this->totalPages = $totalPages;
+
+        return $this;
+    }
+
+    public function getTotalWords(): int
+    {
+        return $this->totalWords;
+    }
+
+    public function setTotalWords(int $totalWords): self
+    {
+        $this->totalWords = $totalWords;
 
         return $this;
     }

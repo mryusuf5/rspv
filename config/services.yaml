@@ -19,5 +19,11 @@ services:
     App\:
         resource: '../src/'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    App\EventListener\CorsListener:
+        arguments:
+            $corsAllowOrigin: '%env(CORS_ALLOW_ORIGIN)%'
+
+    App\OpenApi\OpenApiFactory:
+        decorates: 'api_platform.openapi.factory'
+        arguments:
+            $decorated: '@.inner'
