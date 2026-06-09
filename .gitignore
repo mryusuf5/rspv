@@ -23,3 +23,7 @@
 /build/
 /allure-results/
 /allure-report/
+
+# Generated test reports
+build/
+allure-report/
