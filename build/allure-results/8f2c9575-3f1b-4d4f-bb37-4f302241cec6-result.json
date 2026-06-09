@@ -1,0 +1,61 @@
+{
+    "uuid": "8f2c9575-3f1b-4d4f-bb37-4f302241cec6",
+    "name": "PUT rejects negative wordIndex",
+    "description": null,
+    "descriptionHtml": null,
+    "start": 1780582666025,
+    "stop": 1780582666411,
+    "status": "passed",
+    "statusDetails": {
+        "known": null,
+        "muted": null,
+        "flaky": null,
+        "message": null,
+        "trace": null
+    },
+    "stage": "finished",
+    "steps": [],
+    "attachments": [],
+    "parameters": [],
+    "historyId": "a4e29e2a32828b91fe150ab25038a59e",
+    "testCaseId": "203862aabe9ff574631f37c1a017404c",
+    "rerunOf": null,
+    "fullName": "App\\Tests\\Api\\UserBookProgressTest::testPutRejectsNegativeWordIndex",
+    "titlePath": [
+        "App",
+        "Tests",
+        "Api",
+        "UserBookProgressTest"
+    ],
+    "labels": [
+        {
+            "name": "testClass",
+            "value": "App\\Tests\\Api\\UserBookProgressTest"
+        },
+        {
+            "name": "testMethod",
+            "value": "testPutRejectsNegativeWordIndex"
+        },
+        {
+            "name": "host",
+            "value": "1313AAE"
+        },
+        {
+            "name": "thread",
+            "value": null
+        },
+        {
+            "name": "severity",
+            "value": "normal"
+        },
+        {
+            "name": "feature",
+            "value": "Reading Progress"
+        },
+        {
+            "name": "epic",
+            "value": "RSVP Reading API"
+        }
+    ],
+    "links": []
+}

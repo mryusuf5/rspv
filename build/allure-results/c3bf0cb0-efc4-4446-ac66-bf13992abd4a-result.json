@@ -1,0 +1,61 @@
+{
+    "uuid": "c3bf0cb0-efc4-4446-ac66-bf13992abd4a",
+    "name": "GET \/books\/{id} returns metadata for the owner",
+    "description": null,
+    "descriptionHtml": null,
+    "start": 1780582659301,
+    "stop": 1780582659689,
+    "status": "passed",
+    "statusDetails": {
+        "known": null,
+        "muted": null,
+        "flaky": null,
+        "message": null,
+        "trace": null
+    },
+    "stage": "finished",
+    "steps": [],
+    "attachments": [],
+    "parameters": [],
+    "historyId": "1f4ead21b1cbb1cb77aae202d91da616",
+    "testCaseId": "dcd181bec2b80f6edb5de0f24c67fcd2",
+    "rerunOf": null,
+    "fullName": "App\\Tests\\Api\\BookResourceTest::testGetOwnBookReturnsMetadata",
+    "titlePath": [
+        "App",
+        "Tests",
+        "Api",
+        "BookResourceTest"
+    ],
+    "labels": [
+        {
+            "name": "testClass",
+            "value": "App\\Tests\\Api\\BookResourceTest"
+        },
+        {
+            "name": "testMethod",
+            "value": "testGetOwnBookReturnsMetadata"
+        },
+        {
+            "name": "host",
+            "value": "1313AAE"
+        },
+        {
+            "name": "thread",
+            "value": null
+        },
+        {
+            "name": "severity",
+            "value": "normal"
+        },
+        {
+            "name": "feature",
+            "value": "Books"
+        },
+        {
+            "name": "epic",
+            "value": "RSVP Reading API"
+        }
+    ],
+    "links": []
+}

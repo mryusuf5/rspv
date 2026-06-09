@@ -1,0 +1,61 @@
+{
+    "uuid": "c5c0b23e-65fb-4c80-a28b-dc4d71106bab",
+    "name": "Listing books requires authentication",
+    "description": null,
+    "descriptionHtml": null,
+    "start": 1780582657936,
+    "stop": 1780582657981,
+    "status": "passed",
+    "statusDetails": {
+        "known": null,
+        "muted": null,
+        "flaky": null,
+        "message": null,
+        "trace": null
+    },
+    "stage": "finished",
+    "steps": [],
+    "attachments": [],
+    "parameters": [],
+    "historyId": "60cfb01a302d21d898fd32c7ba58fdcc",
+    "testCaseId": "87b3fba541d327563125d66dbf44a5df",
+    "rerunOf": null,
+    "fullName": "App\\Tests\\Api\\BookResourceTest::testListRequiresAuth",
+    "titlePath": [
+        "App",
+        "Tests",
+        "Api",
+        "BookResourceTest"
+    ],
+    "labels": [
+        {
+            "name": "testClass",
+            "value": "App\\Tests\\Api\\BookResourceTest"
+        },
+        {
+            "name": "testMethod",
+            "value": "testListRequiresAuth"
+        },
+        {
+            "name": "host",
+            "value": "1313AAE"
+        },
+        {
+            "name": "thread",
+            "value": null
+        },
+        {
+            "name": "severity",
+            "value": "critical"
+        },
+        {
+            "name": "feature",
+            "value": "Books"
+        },
+        {
+            "name": "epic",
+            "value": "RSVP Reading API"
+        }
+    ],
+    "links": []
+}

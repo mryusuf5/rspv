@@ -1,0 +1,61 @@
+{
+    "uuid": "d6468b83-bbea-4670-83a5-d7b80f634458",
+    "name": "PUT rejects payloads missing required fields",
+    "description": null,
+    "descriptionHtml": null,
+    "start": 1780582665093,
+    "stop": 1780582665494,
+    "status": "passed",
+    "statusDetails": {
+        "known": null,
+        "muted": null,
+        "flaky": null,
+        "message": null,
+        "trace": null
+    },
+    "stage": "finished",
+    "steps": [],
+    "attachments": [],
+    "parameters": [],
+    "historyId": "65de9158eba899312403ad67f49e0039",
+    "testCaseId": "cfcf31df14ff66e759c8a583c8ce1985",
+    "rerunOf": null,
+    "fullName": "App\\Tests\\Api\\UserBookProgressTest::testPutRejectsMissingFields",
+    "titlePath": [
+        "App",
+        "Tests",
+        "Api",
+        "UserBookProgressTest"
+    ],
+    "labels": [
+        {
+            "name": "testClass",
+            "value": "App\\Tests\\Api\\UserBookProgressTest"
+        },
+        {
+            "name": "testMethod",
+            "value": "testPutRejectsMissingFields"
+        },
+        {
+            "name": "host",
+            "value": "1313AAE"
+        },
+        {
+            "name": "thread",
+            "value": null
+        },
+        {
+            "name": "severity",
+            "value": "normal"
+        },
+        {
+            "name": "feature",
+            "value": "Reading Progress"
+        },
+        {
+            "name": "epic",
+            "value": "RSVP Reading API"
+        }
+    ],
+    "links": []
+}

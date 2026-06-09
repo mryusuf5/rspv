@@ -1,0 +1,61 @@
+{
+    "uuid": "dee043a8-8ba5-4697-b46e-e7bc388a7baf",
+    "name": "PUT upserts (no duplicate rows)",
+    "description": null,
+    "descriptionHtml": null,
+    "start": 1780582664595,
+    "stop": 1780582665017,
+    "status": "passed",
+    "statusDetails": {
+        "known": null,
+        "muted": null,
+        "flaky": null,
+        "message": null,
+        "trace": null
+    },
+    "stage": "finished",
+    "steps": [],
+    "attachments": [],
+    "parameters": [],
+    "historyId": "9877bcf9b63075fdeba3b61fc7671433",
+    "testCaseId": "6fcfc934ad05aa0e193c1c4c6dbbbbce",
+    "rerunOf": null,
+    "fullName": "App\\Tests\\Api\\UserBookProgressTest::testPutUpdatesExistingProgress",
+    "titlePath": [
+        "App",
+        "Tests",
+        "Api",
+        "UserBookProgressTest"
+    ],
+    "labels": [
+        {
+            "name": "testClass",
+            "value": "App\\Tests\\Api\\UserBookProgressTest"
+        },
+        {
+            "name": "testMethod",
+            "value": "testPutUpdatesExistingProgress"
+        },
+        {
+            "name": "host",
+            "value": "1313AAE"
+        },
+        {
+            "name": "thread",
+            "value": null
+        },
+        {
+            "name": "severity",
+            "value": "critical"
+        },
+        {
+            "name": "feature",
+            "value": "Reading Progress"
+        },
+        {
+            "name": "epic",
+            "value": "RSVP Reading API"
+        }
+    ],
+    "links": []
+}

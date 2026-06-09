@@ -1,0 +1,61 @@
+{
+    "uuid": "c7facd74-bf87-4765-97b4-a2374ead2b3e",
+    "name": "Cannot delete another user's book",
+    "description": null,
+    "descriptionHtml": null,
+    "start": 1780582661010,
+    "stop": 1780582661756,
+    "status": "passed",
+    "statusDetails": {
+        "known": null,
+        "muted": null,
+        "flaky": null,
+        "message": null,
+        "trace": null
+    },
+    "stage": "finished",
+    "steps": [],
+    "attachments": [],
+    "parameters": [],
+    "historyId": "4eaaf2b16aea87fd2ab791d88678a08c",
+    "testCaseId": "430dc18c314e499653fab5712fe0bdd3",
+    "rerunOf": null,
+    "fullName": "App\\Tests\\Api\\BookResourceTest::testCannotDeleteOtherUsersBook",
+    "titlePath": [
+        "App",
+        "Tests",
+        "Api",
+        "BookResourceTest"
+    ],
+    "labels": [
+        {
+            "name": "testClass",
+            "value": "App\\Tests\\Api\\BookResourceTest"
+        },
+        {
+            "name": "testMethod",
+            "value": "testCannotDeleteOtherUsersBook"
+        },
+        {
+            "name": "host",
+            "value": "1313AAE"
+        },
+        {
+            "name": "thread",
+            "value": null
+        },
+        {
+            "name": "severity",
+            "value": "critical"
+        },
+        {
+            "name": "feature",
+            "value": "Books"
+        },
+        {
+            "name": "epic",
+            "value": "RSVP Reading API"
+        }
+    ],
+    "links": []
+}

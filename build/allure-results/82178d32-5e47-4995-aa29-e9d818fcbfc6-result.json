@@ -1,0 +1,61 @@
+{
+    "uuid": "82178d32-5e47-4995-aa29-e9d818fcbfc6",
+    "name": "Cannot read another user's book (404)",
+    "description": null,
+    "descriptionHtml": null,
+    "start": 1780582659756,
+    "stop": 1780582660504,
+    "status": "passed",
+    "statusDetails": {
+        "known": null,
+        "muted": null,
+        "flaky": null,
+        "message": null,
+        "trace": null
+    },
+    "stage": "finished",
+    "steps": [],
+    "attachments": [],
+    "parameters": [],
+    "historyId": "ed853371dfbf137a0f725e5212691909",
+    "testCaseId": "5c888210b439def6f434f358633aed30",
+    "rerunOf": null,
+    "fullName": "App\\Tests\\Api\\BookResourceTest::testCannotGetOtherUsersBook",
+    "titlePath": [
+        "App",
+        "Tests",
+        "Api",
+        "BookResourceTest"
+    ],
+    "labels": [
+        {
+            "name": "testClass",
+            "value": "App\\Tests\\Api\\BookResourceTest"
+        },
+        {
+            "name": "testMethod",
+            "value": "testCannotGetOtherUsersBook"
+        },
+        {
+            "name": "host",
+            "value": "1313AAE"
+        },
+        {
+            "name": "thread",
+            "value": null
+        },
+        {
+            "name": "severity",
+            "value": "critical"
+        },
+        {
+            "name": "feature",
+            "value": "Books"
+        },
+        {
+            "name": "epic",
+            "value": "RSVP Reading API"
+        }
+    ],
+    "links": []
+}

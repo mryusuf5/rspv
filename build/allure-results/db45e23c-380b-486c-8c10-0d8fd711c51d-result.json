@@ -1,0 +1,61 @@
+{
+    "uuid": "db45e23c-380b-486c-8c10-0d8fd711c51d",
+    "name": "Owner can delete their book",
+    "description": null,
+    "descriptionHtml": null,
+    "start": 1780582660560,
+    "stop": 1780582660951,
+    "status": "passed",
+    "statusDetails": {
+        "known": null,
+        "muted": null,
+        "flaky": null,
+        "message": null,
+        "trace": null
+    },
+    "stage": "finished",
+    "steps": [],
+    "attachments": [],
+    "parameters": [],
+    "historyId": "936927a8512e15f4843771f26ba0f6dc",
+    "testCaseId": "da3ce4e51d52f43c29227bcae49d6596",
+    "rerunOf": null,
+    "fullName": "App\\Tests\\Api\\BookResourceTest::testDeleteOwnBook",
+    "titlePath": [
+        "App",
+        "Tests",
+        "Api",
+        "BookResourceTest"
+    ],
+    "labels": [
+        {
+            "name": "testClass",
+            "value": "App\\Tests\\Api\\BookResourceTest"
+        },
+        {
+            "name": "testMethod",
+            "value": "testDeleteOwnBook"
+        },
+        {
+            "name": "host",
+            "value": "1313AAE"
+        },
+        {
+            "name": "thread",
+            "value": null
+        },
+        {
+            "name": "severity",
+            "value": "critical"
+        },
+        {
+            "name": "feature",
+            "value": "Books"
+        },
+        {
+            "name": "epic",
+            "value": "RSVP Reading API"
+        }
+    ],
+    "links": []
+}

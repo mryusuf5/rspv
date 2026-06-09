@@ -1,0 +1,61 @@
+{
+    "uuid": "f8791ae2-4d0a-4583-b345-29c6850ed066",
+    "name": "Requesting an unknown page returns 404",
+    "description": null,
+    "descriptionHtml": null,
+    "start": 1780582662755,
+    "stop": 1780582663157,
+    "status": "passed",
+    "statusDetails": {
+        "known": null,
+        "muted": null,
+        "flaky": null,
+        "message": null,
+        "trace": null
+    },
+    "stage": "finished",
+    "steps": [],
+    "attachments": [],
+    "parameters": [],
+    "historyId": "3d2e993c1f42613eb8133080f72c6511",
+    "testCaseId": "fe4334dcf6fb336c632e08fb7a1949d0",
+    "rerunOf": null,
+    "fullName": "App\\Tests\\Api\\PageResourceTest::testGetUnknownPageReturns404",
+    "titlePath": [
+        "App",
+        "Tests",
+        "Api",
+        "PageResourceTest"
+    ],
+    "labels": [
+        {
+            "name": "testClass",
+            "value": "App\\Tests\\Api\\PageResourceTest"
+        },
+        {
+            "name": "testMethod",
+            "value": "testGetUnknownPageReturns404"
+        },
+        {
+            "name": "host",
+            "value": "1313AAE"
+        },
+        {
+            "name": "thread",
+            "value": null
+        },
+        {
+            "name": "severity",
+            "value": "normal"
+        },
+        {
+            "name": "feature",
+            "value": "Pages"
+        },
+        {
+            "name": "epic",
+            "value": "RSVP Reading API"
+        }
+    ],
+    "links": []
+}
