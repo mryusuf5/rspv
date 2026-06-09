@@ -8,6 +8,10 @@ jobs:
   phpunit:
     runs-on: ubuntu-latest
 
+    env:
+      APP_ENV: test
+      DATABASE_URL: "sqlite:///%kernel.project_dir%/var/test.db"
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -16,11 +20,36 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: '8.3'
-          extensions: zip, intl, pdo_sqlite
+          extensions: intl, zip, pdo, pdo_sqlite, sqlite3
           tools: composer
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
+
       - name: Install dependencies
-        run: composer install --no-interaction --prefer-dist
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      - name: Prepare test environment
+        run: |
+          mkdir -p var
+          mkdir -p build
+          mkdir -p config/jwt
+          echo "APP_ENV=test" > .env.test.local
+          echo "DATABASE_URL=sqlite:///%kernel.project_dir%/var/test.db" >> .env.test.local
+          echo "JWT_PASSPHRASE=test" >> .env.test.local
+
+      - name: Generate JWT keys
+        run: php bin/console lexik:jwt:generate-keypair --skip-if-exists --env=test
+
+      - name: Prepare test database
+        run: |
+          php bin/console doctrine:database:create --if-not-exists --env=test
+          php bin/console doctrine:schema:update --force --env=test
+
+      - name: Show PHPUnit version
+        run: php bin/phpunit --version
 
       - name: Run tests
-        run: php bin/phpunit
+        run: php bin/phpunit -c phpunit.dist.xml --log-junit build/junit.xml --display-errors
